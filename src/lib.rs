@@ -1,6 +1,6 @@
-
 pub fn noun_stemmer(input: &str) -> String {
     let mut buffer = input.to_owned();
+    let mut remove_y = true;
 
     if buffer.ends_with("তে") || buffer.ends_with("কে") {
         string_pop(&mut buffer, 2);
@@ -10,15 +10,26 @@ pub fn noun_stemmer(input: &str) -> String {
         string_pop(&mut buffer, 2);
     }
 
+    if buffer.ends_with("য়ের") {
+        if noun_eliminate_y(&buffer[..buffer.len() - 9]) {
+            string_pop(&mut buffer, 3);
+        } else {
+            // Just remove ে and র, and mark য় to not to be removed.
+            string_pop(&mut buffer, 2);
+            remove_y = false;
+        }
+    }
+
     if buffer.ends_with('র') {
         buffer.pop();
     }
 
-    if  buffer.ends_with('ে') && !matches!(buffer.get(buffer.len()-6..), Some("দে") | Some("কে")) {
+    if buffer.ends_with('ে') && !matches!(buffer.get(buffer.len() - 6..), Some("দে") | Some("কে"))
+    {
         buffer.pop();
     }
 
-    if buffer.ends_with('য়') {
+    if buffer.ends_with('য়') && remove_y {
         buffer.pop();
     }
 
@@ -26,7 +37,12 @@ pub fn noun_stemmer(input: &str) -> String {
         string_pop(&mut buffer, 3);
     }
 
-    if buffer.ends_with("দে") || buffer.ends_with("কে") || buffer.ends_with("কা") || buffer.ends_with("টা") || buffer.ends_with("টি") {
+    if buffer.ends_with("দে")
+        || buffer.ends_with("কে")
+        || buffer.ends_with("কা")
+        || buffer.ends_with("টা")
+        || buffer.ends_with("টি")
+    {
         string_pop(&mut buffer, 2);
     }
 
@@ -39,6 +55,28 @@ pub fn noun_stemmer(input: &str) -> String {
     }
 
     buffer
+}
+
+fn noun_eliminate_y(term: &str) -> bool {
+    let stem_len = term
+        .chars()
+        .filter(|c| {
+            match c {
+                // Vowel signs
+                '\u{09BE}'..='\u{09C8}' => false,
+                _ => true,
+            }
+        })
+        .count();
+
+    stem_len == 1 || is_vowel(&term[term.len() - 3..])
+}
+
+fn is_vowel(c: &str) -> bool {
+    match c.chars().next().unwrap() {
+        '\u{0985}'..='\u{0994}' => true,
+        _ => false,
+    }
 }
 
 fn string_pop(string: &mut String, n: usize) {
@@ -67,5 +105,12 @@ mod tests {
         assert_eq!(noun_stemmer("মাছের"), "মাছ");
         assert_eq!(noun_stemmer("বইয়ে"), "বই");
         assert_eq!(noun_stemmer("মানুষেরা"), "মানুষ");
+        // Special Case 1
+        assert_eq!(noun_stemmer("মায়ের"), "মা");
+        assert_eq!(noun_stemmer("বইয়ের"), "বই");
+        assert_eq!(noun_stemmer("পায়ের"), "পা");
+        assert_eq!(noun_stemmer("ভাইয়ের"), "ভাই");
+        assert_eq!(noun_stemmer("বউয়ের"), "বউ");
+        assert_eq!(noun_stemmer("উভয়ের"), "উভয়");
     }
 }
