@@ -3,13 +3,11 @@ pub fn noun_stemmer(input: &str) -> String {
     let mut buffer = input.to_owned();
 
     if buffer.ends_with("তে") || buffer.ends_with("কে") {
-        buffer.pop();
-        buffer.pop();
+        string_pop(&mut buffer, 2);
     }
 
     if buffer.ends_with("রা") {
-        buffer.pop();
-        buffer.pop();
+        string_pop(&mut buffer, 2);
     }
 
     if buffer.ends_with('র') {
@@ -25,29 +23,27 @@ pub fn noun_stemmer(input: &str) -> String {
     }
 
     if buffer.ends_with("েরা") {
-        buffer.pop();
-        buffer.pop();
-        buffer.pop();
+        string_pop(&mut buffer, 3);
     }
 
     if buffer.ends_with("দে") || buffer.ends_with("কে") || buffer.ends_with("কা") || buffer.ends_with("টা") || buffer.ends_with("টি") {
-        buffer.pop();
-        buffer.pop();
+        string_pop(&mut buffer, 2);
     }
 
     if buffer.ends_with("জন") || buffer.ends_with("লি") {
-        buffer.pop();
-        buffer.pop();
+        string_pop(&mut buffer, 2);
     }
 
     if buffer.ends_with("গুলো") || buffer.ends_with("খানা") {
-        buffer.pop();
-        buffer.pop();
-        buffer.pop();
-        buffer.pop();
+        string_pop(&mut buffer, 4);
     }
 
     buffer
+}
+
+fn string_pop(string: &mut String, n: usize) {
+    let new_len = string.len() - n * 3; // Every Bengali character is of 3 Bytes.
+    string.truncate(new_len);
 }
 
 #[cfg(test)]
