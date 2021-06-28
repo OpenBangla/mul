@@ -37,11 +37,22 @@ pub fn noun_stemmer(input: &str) -> String {
         string_pop(&mut buffer, 3);
     }
 
+    if buffer.ends_with("টি") {
+        // Check if the `ট` character is a part of a jukktakkhor.
+        if let Some(c) = buffer
+            .get(..buffer.len() - 6)
+            .and_then(|s| s.get(s.len() - 3..))
+        {
+            if c != "্" {
+                string_pop(&mut buffer, 2);
+            }
+        }
+    }
+
     if buffer.ends_with("দে")
         || buffer.ends_with("কে")
         || buffer.ends_with("কা")
         || buffer.ends_with("টা")
-        || buffer.ends_with("টি")
     {
         string_pop(&mut buffer, 2);
     }
@@ -57,6 +68,13 @@ pub fn noun_stemmer(input: &str) -> String {
     buffer
 }
 
+/// Checks if the character `য়` is removable in the `term` word.
+/// The `term` word is all the characters up to the `য়` character of a word.
+///
+/// It is removable if the length of the _stem_ of the term word is one and
+/// the last character is a vowel.
+///
+/// **Stem**: It is the word without any vowel signs.
 fn noun_eliminate_y(term: &str) -> bool {
     let stem_len = term
         .chars()
@@ -72,6 +90,7 @@ fn noun_eliminate_y(term: &str) -> bool {
     stem_len == 1 || is_vowel(&term[term.len() - 3..])
 }
 
+/// Checks if the `c` is a Bengali vowel character.
 fn is_vowel(c: &str) -> bool {
     match c.chars().next().unwrap() {
         '\u{0985}'..='\u{0994}' => true,
@@ -79,6 +98,7 @@ fn is_vowel(c: &str) -> bool {
     }
 }
 
+/// Removes last `n` characters from the `string` buffer.
 fn string_pop(string: &mut String, n: usize) {
     let new_len = string.len() - n * 3; // Every Bengali character is of 3 Bytes.
     string.truncate(new_len);
@@ -105,12 +125,15 @@ mod tests {
         assert_eq!(noun_stemmer("মাছের"), "মাছ");
         assert_eq!(noun_stemmer("বইয়ে"), "বই");
         assert_eq!(noun_stemmer("মানুষেরা"), "মানুষ");
-        // Special Case 1
+        // Special case 1
         assert_eq!(noun_stemmer("মায়ের"), "মা");
         assert_eq!(noun_stemmer("বইয়ের"), "বই");
         assert_eq!(noun_stemmer("পায়ের"), "পা");
         assert_eq!(noun_stemmer("ভাইয়ের"), "ভাই");
         assert_eq!(noun_stemmer("বউয়ের"), "বউ");
         assert_eq!(noun_stemmer("উভয়ের"), "উভয়");
+        // Special case 2
+        assert_eq!(noun_stemmer("মেষটির"), "মেষ");
+        assert_eq!(noun_stemmer("বৃষ্টির"), "বৃষ্টি");
     }
 }
