@@ -2,6 +2,11 @@ pub fn noun_stemmer(input: &str) -> String {
     let mut buffer = input.to_owned();
     let mut remove_y = true;
 
+    // Remove ই only if the length of the stem of the word without ই is more than one character.
+    if buffer.ends_with("ই") && stem_len(&buffer[..buffer.len() - 3]) != 1 {
+        buffer.pop();
+    }
+
     if buffer.ends_with("তে") || buffer.ends_with("কে") {
         string_pop(&mut buffer, 2);
     }
@@ -20,11 +25,9 @@ pub fn noun_stemmer(input: &str) -> String {
         }
     }
 
-    if buffer.ends_with('র') {
-        // Remove র if only it has a preceding kar character. 
-        if is_kar(&buffer[..buffer.len() - 3][buffer.len() - 6..]) {
-            buffer.pop();
-        }
+    // Remove র only if it has a preceding kar character.
+    if buffer.ends_with('র') && is_kar(&buffer[..buffer.len() - 3][buffer.len() - 6..]) {
+        buffer.pop();
     }
 
     if buffer.ends_with('ে') && !matches!(buffer.get(buffer.len() - 6..), Some("দে") | Some("কে"))
@@ -77,10 +80,14 @@ pub fn noun_stemmer(input: &str) -> String {
 /// It is removable if the length of the _stem_ of the term word is one and
 /// the last character is a vowel.
 ///
-/// **Stem**: It is the word without any vowel signs.
+/// **Stem**: The word without any vowel signs.
 fn noun_eliminate_y(term: &str) -> bool {
-    let stem_len = term
-        .chars()
+    stem_len(term) == 1 || is_vowel(&term[term.len() - 3..])
+}
+
+/// Returns the length of the `term` word without any Kars or vowel signs.
+fn stem_len(term: &str) -> usize {
+    term.chars()
         .filter(|c| {
             match c {
                 // Vowel signs
@@ -88,9 +95,7 @@ fn noun_eliminate_y(term: &str) -> bool {
                 _ => true,
             }
         })
-        .count();
-
-    stem_len == 1 || is_vowel(&term[term.len() - 3..])
+        .count()
 }
 
 /// Checks if the `c` is a Bengali vowel character.
@@ -131,7 +136,6 @@ mod tests {
         assert_eq!(noun_stemmer("মানুষজন"), "মানুষ");
         assert_eq!(noun_stemmer("এখানকার"), "এখান");
         assert_eq!(noun_stemmer("মাছের"), "মাছ");
-        assert_eq!(noun_stemmer("বইয়ে"), "বই");
         assert_eq!(noun_stemmer("মানুষেরা"), "মানুষ");
         assert_eq!(noun_stemmer("ঐক্যের"), "ঐক্য");
         assert_eq!(noun_stemmer("ওয়ার্নারের"), "ওয়ার্নার");
@@ -151,5 +155,11 @@ mod tests {
         assert_eq!(noun_stemmer("গরুর"), "গরু");
         assert_eq!(noun_stemmer("মমতার"), "মমতা");
         assert_eq!(noun_stemmer("পাথর"), "পাথর");
+        assert_eq!(noun_stemmer("শুক্র"), "শুক্র");
+        // Special case 3
+        assert_eq!(noun_stemmer("বই"), "বই");
+        assert_eq!(noun_stemmer("লুই"), "লুই");
+        assert_eq!(noun_stemmer("সমাধানই"), "সমাধান");
+        assert_eq!(noun_stemmer("সহজেই"), "সহজ");
     }
 }
