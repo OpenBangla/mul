@@ -21,7 +21,10 @@ pub fn noun_stemmer(input: &str) -> String {
     }
 
     if buffer.ends_with('র') {
-        buffer.pop();
+        // Remove র if only it has a preceding kar character. 
+        if is_kar(&buffer[..buffer.len() - 3][buffer.len() - 6..]) {
+            buffer.pop();
+        }
     }
 
     if buffer.ends_with('ে') && !matches!(buffer.get(buffer.len() - 6..), Some("দে") | Some("কে"))
@@ -92,8 +95,15 @@ fn noun_eliminate_y(term: &str) -> bool {
 
 /// Checks if the `c` is a Bengali vowel character.
 fn is_vowel(c: &str) -> bool {
-    match c.chars().next().unwrap() {
-        '\u{0985}'..='\u{0994}' => true,
+    match c.chars().next() {
+        Some('\u{0985}'..='\u{0994}') => true,
+        _ => false,
+    }
+}
+
+fn is_kar(c: &str) -> bool {
+    match c.chars().next() {
+        Some('\u{09BE}'..='\u{09C8}') => true,
         _ => false,
     }
 }
@@ -114,8 +124,6 @@ mod tests {
         assert_eq!(noun_stemmer("গাছগুলোতে"), "গাছ");
         assert_eq!(noun_stemmer("বাসাতে"), "বাসা");
         assert_eq!(noun_stemmer("মানুষকে"), "মানুষ");
-        assert_eq!(noun_stemmer("মার"), "মা");
-        assert_eq!(noun_stemmer("বাবার"), "বাবা");
         assert_eq!(noun_stemmer("মানুষটির"), "মানুষ");
         assert_eq!(noun_stemmer("মানুষের"), "মানুষ");
         assert_eq!(noun_stemmer("মানুষদের"), "মানুষ");
@@ -125,6 +133,8 @@ mod tests {
         assert_eq!(noun_stemmer("মাছের"), "মাছ");
         assert_eq!(noun_stemmer("বইয়ে"), "বই");
         assert_eq!(noun_stemmer("মানুষেরা"), "মানুষ");
+        assert_eq!(noun_stemmer("ঐক্যের"), "ঐক্য");
+        assert_eq!(noun_stemmer("ওয়ার্নারের"), "ওয়ার্নার");
         // Special case 1
         assert_eq!(noun_stemmer("মায়ের"), "মা");
         assert_eq!(noun_stemmer("বইয়ের"), "বই");
@@ -135,5 +145,11 @@ mod tests {
         // Special case 2
         assert_eq!(noun_stemmer("মেষটির"), "মেষ");
         assert_eq!(noun_stemmer("বৃষ্টির"), "বৃষ্টি");
+        // Special case 3
+        assert_eq!(noun_stemmer("মার"), "মা");
+        assert_eq!(noun_stemmer("বাবার"), "বাবা");
+        assert_eq!(noun_stemmer("গরুর"), "গরু");
+        assert_eq!(noun_stemmer("মমতার"), "মমতা");
+        assert_eq!(noun_stemmer("পাথর"), "পাথর");
     }
 }
