@@ -1,3 +1,33 @@
+//! A Bengali stemmer
+//!
+//! `mul` currently implements a stepwise approach to removing inflections from Bengali words <sup>[1](#references)</sup>.
+//!
+//! ## Example
+//! ```
+//! use mul::noun_stemmer;
+//!
+//! fn main() {
+//!     assert_eq!(noun_stemmer("বাংলায়"), "বাংলা");
+//!     assert_eq!(noun_stemmer("মানুষকে"), "মানুষ");
+//! }
+//! ```
+//!
+//! ## References
+//! 1. M. R. Mahmud, M. Afrin, M. A. Razzaque, E. Miller and J. Iwashige, "A rule based bengali stemmer,"
+//! _2014 International Conference on Advances in Computing, Communications and Informatics (ICACCI)_,
+//! 2014, pp. 2750-2756, doi: 10.1109/ICACCI.2014.6968484.
+
+/// Removes noun inflections such as `টি`, `কে`, `তে` etc from the `input` and returns it.
+///
+/// ```
+/// use mul::noun_stemmer;
+/// 
+/// # fn main() {
+/// assert_eq!(noun_stemmer("মানুষদেরকে"), "মানুষ");
+/// assert_eq!(noun_stemmer("গাছগুলোতে"), "গাছ");
+/// assert_eq!(noun_stemmer("বাসাতে"), "বাসা");
+/// # }
+/// ```
 pub fn noun_stemmer(input: &str) -> String {
     let mut buffer = input.to_owned();
     let mut remove_y = true;
